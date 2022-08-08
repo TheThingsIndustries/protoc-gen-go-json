@@ -5,6 +5,7 @@ package golangplugin
 
 import (
 	"bytes"
+	"errors"
 	"reflect"
 
 	"github.com/TheThingsIndustries/protoc-gen-go-json/jsonplugin"
@@ -72,6 +73,15 @@ func MarshalAny(s *jsonplugin.MarshalState, v *anypb.Any) {
 	// We first need to get the wrapped message out of the Any.
 	msg, err := v.UnmarshalNew()
 	if err != nil {
+		if errors.Is(err, protoregistry.NotFound) {
+			s.WriteObjectStart()
+			s.WriteObjectField("@type")
+			s.WriteString(v.GetTypeUrl())
+			s.WriteObjectField("value")
+			s.WriteBytes(v.GetValue())
+			s.WriteObjectEnd()
+			return
+		}
 		s.SetErrorf("failed to unmarshal wrapped message from Any: %w", err)
 	}
 
@@ -184,6 +194,20 @@ func UnmarshalAny(s *jsonplugin.UnmarshalState) *anypb.Any {
 	// Find the message type by the type URL.
 	t, err := protoregistry.GlobalTypes.FindMessageByURL(typeURL)
 	if err != nil {
+		if errors.Is(err, protoregistry.NotFound) {
+			if key := sub.ReadObjectField(); key != "value" {
+				s.SetError(err)
+				return nil
+			}
+			value := sub.ReadBytes()
+			if err := sub.Err(); err != nil {
+				return nil
+			}
+			return &anypb.Any{
+				TypeUrl: typeURL,
+				Value:   value,
+			}
+		}
 		s.SetError(err)
 		return nil
 	}

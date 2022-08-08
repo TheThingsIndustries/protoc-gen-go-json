@@ -68,7 +68,13 @@ func MarshalAny(s *jsonplugin.MarshalState, v *types.Any) {
 	// Then we unmarshal the Any into that empty message.
 	msg, err := types.EmptyAny(v)
 	if err != nil {
-		s.SetErrorf("unknown message type %q for Any: %w", v.GetTypeUrl(), err)
+		s.WriteObjectStart()
+		s.WriteObjectField("@type")
+		s.WriteString(v.GetTypeUrl())
+		s.WriteObjectField("value")
+		s.WriteBytes(v.GetValue())
+		s.WriteObjectEnd()
+		return
 	}
 	if err = types.UnmarshalAny(v, msg); err != nil {
 		s.SetErrorf("failed to unmarshal wrapped message from Any: %w", err)
@@ -188,8 +194,18 @@ func UnmarshalAny(s *jsonplugin.UnmarshalState) *types.Any {
 	}
 	t := proto.MessageType(typeURL[slash+1:])
 	if t == nil {
-		s.SetErrorf("unknown message type %q", typeURL[slash+1:])
-		return nil
+		if key := sub.ReadObjectField(); key != "value" {
+			s.SetErrorf("unknown message type %q", typeURL[slash+1:])
+			return nil
+		}
+		value := sub.ReadBytes()
+		if err := sub.Err(); err != nil {
+			return nil
+		}
+		return &types.Any{
+			TypeUrl: typeURL,
+			Value:   value,
+		}
 	}
 
 	// Allocate a new message of that type.
