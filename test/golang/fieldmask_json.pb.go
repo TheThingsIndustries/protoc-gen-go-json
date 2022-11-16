@@ -11,6 +11,36 @@ import (
 	jsonplugin "github.com/TheThingsIndustries/protoc-gen-go-json/jsonplugin"
 )
 
+// MarshalProtoJSON marshals the MessageWithFieldMask message to JSON.
+func (x *MessageWithFieldMask) MarshalProtoJSON(s *jsonplugin.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.FieldMask != nil || s.HasField("field_mask") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("field_mask")
+		if x.FieldMask == nil {
+			s.WriteNil()
+		} else {
+			golang.MarshalFieldMask(s, x.FieldMask)
+		}
+	}
+	if x.Name != "" || s.HasField("name") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("name")
+		s.WriteString(x.Name)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the MessageWithFieldMask to JSON.
+func (x *MessageWithFieldMask) MarshalJSON() ([]byte, error) {
+	return jsonplugin.DefaultMarshalerConfig.Marshal(x)
+}
+
 // UnmarshalProtoJSON unmarshals the MessageWithFieldMask message from JSON.
 func (x *MessageWithFieldMask) UnmarshalProtoJSON(s *jsonplugin.UnmarshalState) {
 	if s.ReadNil() {
@@ -43,6 +73,27 @@ func (x *MessageWithFieldMask) UnmarshalJSON(b []byte) error {
 	return jsonplugin.DefaultUnmarshalerConfig.Unmarshal(b, x)
 }
 
+// MarshalProtoJSON marshals the MessageWithSubmessageWithFieldmask message to JSON.
+func (x *MessageWithSubmessageWithFieldmask) MarshalProtoJSON(s *jsonplugin.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.Submessage != nil || s.HasField("submessage") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("submessage")
+		x.Submessage.MarshalProtoJSON(s.WithField("submessage"))
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the MessageWithSubmessageWithFieldmask to JSON.
+func (x *MessageWithSubmessageWithFieldmask) MarshalJSON() ([]byte, error) {
+	return jsonplugin.DefaultMarshalerConfig.Marshal(x)
+}
+
 // UnmarshalProtoJSON unmarshals the MessageWithSubmessageWithFieldmask message from JSON.
 func (x *MessageWithSubmessageWithFieldmask) UnmarshalProtoJSON(s *jsonplugin.UnmarshalState) {
 	if s.ReadNil() {
@@ -67,6 +118,37 @@ func (x *MessageWithSubmessageWithFieldmask) UnmarshalProtoJSON(s *jsonplugin.Un
 // UnmarshalJSON unmarshals the MessageWithSubmessageWithFieldmask from JSON.
 func (x *MessageWithSubmessageWithFieldmask) UnmarshalJSON(b []byte) error {
 	return jsonplugin.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the MessageWithFieldmaskAndSubmessageWithFieldmask message to JSON.
+func (x *MessageWithFieldmaskAndSubmessageWithFieldmask) MarshalProtoJSON(s *jsonplugin.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.FieldMask != nil || s.HasField("field_mask") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("field_mask")
+		if x.FieldMask == nil {
+			s.WriteNil()
+		} else {
+			golang.MarshalFieldMask(s, x.FieldMask)
+		}
+	}
+	if x.Submessage != nil || s.HasField("submessage") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("submessage")
+		// NOTE: MessageWithoutFieldMask does not seem to implement MarshalProtoJSON.
+		golang.MarshalMessage(s, x.Submessage)
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the MessageWithFieldmaskAndSubmessageWithFieldmask to JSON.
+func (x *MessageWithFieldmaskAndSubmessageWithFieldmask) MarshalJSON() ([]byte, error) {
+	return jsonplugin.DefaultMarshalerConfig.Marshal(x)
 }
 
 // UnmarshalProtoJSON unmarshals the MessageWithFieldmaskAndSubmessageWithFieldmask message from JSON.
@@ -106,6 +188,36 @@ func (x *MessageWithFieldmaskAndSubmessageWithFieldmask) UnmarshalProtoJSON(s *j
 // UnmarshalJSON unmarshals the MessageWithFieldmaskAndSubmessageWithFieldmask from JSON.
 func (x *MessageWithFieldmaskAndSubmessageWithFieldmask) UnmarshalJSON(b []byte) error {
 	return jsonplugin.DefaultUnmarshalerConfig.Unmarshal(b, x)
+}
+
+// MarshalProtoJSON marshals the MessageWithFieldmaskAndSubmessageWithoutFieldmask message to JSON.
+func (x *MessageWithFieldmaskAndSubmessageWithoutFieldmask) MarshalProtoJSON(s *jsonplugin.MarshalState) {
+	if x == nil {
+		s.WriteNil()
+		return
+	}
+	s.WriteObjectStart()
+	var wroteField bool
+	if x.FieldMask != nil || s.HasField("field_mask") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("field_mask")
+		if x.FieldMask == nil {
+			s.WriteNil()
+		} else {
+			golang.MarshalFieldMask(s, x.FieldMask)
+		}
+	}
+	if x.Submessage != nil || s.HasField("submessage") {
+		s.WriteMoreIf(&wroteField)
+		s.WriteObjectField("submessage")
+		x.Submessage.MarshalProtoJSON(s.WithField("submessage"))
+	}
+	s.WriteObjectEnd()
+}
+
+// MarshalJSON marshals the MessageWithFieldmaskAndSubmessageWithoutFieldmask to JSON.
+func (x *MessageWithFieldmaskAndSubmessageWithoutFieldmask) MarshalJSON() ([]byte, error) {
+	return jsonplugin.DefaultMarshalerConfig.Marshal(x)
 }
 
 // UnmarshalProtoJSON unmarshals the MessageWithFieldmaskAndSubmessageWithoutFieldmask message from JSON.
@@ -156,8 +268,7 @@ func (x *MessageWithSubmessageWithFieldmaskAndMarshaler) MarshalProtoJSON(s *jso
 	if x.Submessage != nil || s.HasField("submessage") {
 		s.WriteMoreIf(&wroteField)
 		s.WriteObjectField("submessage")
-		// NOTE: MessageWithFieldMask does not seem to implement MarshalProtoJSON.
-		golang.MarshalMessage(s, x.Submessage)
+		x.Submessage.MarshalProtoJSON(s.WithField("submessage"))
 	}
 	s.WriteObjectEnd()
 }

@@ -200,6 +200,11 @@ nextField:
 				case messageIsWKT(value.Message):
 					// If the map value is a WKT, write the WKT.
 					g.writeWKTValue(field, value.Message, "v")
+
+				// Has the same behaviour as the g.messageHasMarshaler case but is a catch all for when the message has a fieldmask.
+				case g.messageHasFieldMask(value.Message):
+					// If the map value is of type message, and the message has a fieldmask, use that.
+					g.P(`v.MarshalProtoJSON(s.WithField("`, field.Desc.Name(), `"))`)
 				default:
 					// Otherwise delegate to the library.
 					g.P("// NOTE: ", value.Message.GoIdent.GoName, " does not seem to implement MarshalProtoJSON.")
@@ -298,6 +303,11 @@ nextField:
 				case messageIsWKT(field.Message):
 					// If the list element is a WKT, write the WKT.
 					g.writeWKTValue(field, field.Message, "element")
+
+				// Has the same behaviour as the g.messageHasMarshaler case but is a catch all for when the message has a fieldmask.
+				case g.messageHasFieldMask(field.Message):
+					// If the list element is of type message, and the message has a fieldmask, use that.
+					g.P(`element.MarshalProtoJSON(s.WithField("`, field.Desc.Name(), `"))`)
 				default:
 					// Otherwise delegate to the library.
 					g.P("// NOTE: ", field.Message.GoIdent.GoName, " does not seem to implement MarshalProtoJSON.")
@@ -394,6 +404,11 @@ nextField:
 				case messageIsWKT(field.Message):
 					// If the field is a WKT, write the WKT.
 					g.writeWKTValue(field, field.Message, fmt.Sprintf("%s.%s", messageOrOneofIdent, fieldGoName))
+
+				// Has the same behaviour as the g.messageHasMarshaler case but is a catch all for when the message has a fieldmask.
+				case g.messageHasFieldMask(field.Message):
+					// If the field is of type message, and the message has a fieldmask, use that.
+					g.P(messageOrOneofIdent, ".", fieldGoName, `.MarshalProtoJSON(s.WithField("`, field.Desc.Name(), `"))`)
 				default:
 					// Otherwise delegate to the library.
 					g.P("// NOTE: ", field.Message.GoIdent.GoName, " does not seem to implement MarshalProtoJSON.")
