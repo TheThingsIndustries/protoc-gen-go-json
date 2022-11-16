@@ -17,7 +17,7 @@ import (
 
 func (g *generator) messageHasAnyMarshaler(message *protogen.Message) bool {
 	// We have a marshaler if the message itself has a marshaler or unmarshaler.
-	if g.messageHasMarshaler(message) || g.messageHasUnmarshaler(message) {
+	if g.messageHasMarshaler(message) || g.messageHasUnmarshaler(message) || g.messageHasFieldMask(message) {
 		return true
 	}
 
@@ -30,7 +30,7 @@ func (g *generator) messageHasAnyMarshaler(message *protogen.Message) bool {
 
 	// We have a marshaler if any of the sub-messages defined in the message has any marshaler.
 	for _, message := range message.Messages {
-		if g.messageHasAnyMarshaler(message) {
+		if g.messageHasAnyMarshaler(message) || g.messageHasFieldMask(message) {
 			return true
 		}
 	}
@@ -58,7 +58,7 @@ func (g *generator) genMessage(message *protogen.Message) {
 	}
 
 	// Generate unmarshaler for the message itself, if it has one.
-	if g.messageHasUnmarshaler(message) {
+	if g.messageHasUnmarshaler(message) || g.messageHasFieldMask(message) {
 		g.genMessageUnmarshaler(message)
 		if Params.Std {
 			g.genStdMessageUnmarshaler(message)

@@ -5,6 +5,7 @@ package gen
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/TheThingsIndustries/protoc-gen-go-json/annotations"
 	"github.com/TheThingsIndustries/protoc-gen-go-json/internal/gogoproto"
@@ -77,6 +78,35 @@ func (g *generator) messageHasUnmarshaler(message *protogen.Message, visited ...
 	}
 
 	return generateUnmarshaler
+}
+
+func (g *generator) messageHasFieldMask(message *protogen.Message, visited ...*protogen.Message) bool {
+	// Since we're going to be looking at the fields of this message, it's possible that there will be cycles.
+	// If that's the case, we'll return false here so that the caller can continue with the next field.
+	for _, visited := range visited {
+		if message == visited {
+			return false
+		}
+	}
+
+	// No code is generated for map entries, so we also don't need to generate marshalers.
+	if message.Desc.IsMapEntry() {
+		return false
+	}
+
+	var generate bool
+
+	for _, field := range message.Fields {
+		if strings.HasPrefix(string(field.Desc.FullName()), "google.protobuf.FieldMask") {
+			generate = true
+		}
+
+		// If the field is a message, and that message has a field mask, we need to generate a marshaler.
+		if field.Message != nil && g.messageHasFieldMask(field.Message, append(visited, message)...) {
+			generate = true
+		}
+	}
+	return generate
 }
 
 func (g *generator) genMessageUnmarshaler(message *protogen.Message) {
@@ -223,6 +253,14 @@ nextField:
 					g.P("return")
 					g.P("}")
 					g.P("x.", fieldGoName, "[key] = ", ifThenElse(nullable, "", "*"), "v")
+
+				// Has the same behaviour as the g.messageHasUnmarshaler case but is a catch all for when the message has a fieldmask.
+				case g.messageHasFieldMask(field.Message):
+					// If the map value is of type message, and the message has a marshaler,
+					// allocate a zero message, call the unmarshaler and set the map value for the key to the message.
+					g.P("var v ", value.Message.GoIdent)
+					g.P(`v.UnmarshalProtoJSON(s)`)
+					g.P("x.", fieldGoName, "[key] = &v")
 				default:
 					// Otherwise, delegate to the library.
 					g.P("// NOTE: ", value.Message.GoIdent.GoName, " does not seem to implement UnmarshalProtoJSON.")
@@ -314,6 +352,23 @@ nextField:
 					g.P("return")
 					g.P("}")
 					g.P("x.", fieldGoName, " = append(x.", fieldGoName, ", ", ifThenElse(nullable, "", "*"), "v)")
+
+				// Has the same behaviour as the g.messageHasUnmarshaler case but is a catch all for when the message has a fieldmask.
+				case g.messageHasFieldMask(field.Message):
+					if nullable {
+						// If we read nil, append nil and return so that we can continue with the next key.
+						g.P("if s.ReadNil() {")
+						g.P("x.", fieldGoName, " = append(x.", fieldGoName, ", nil)")
+						g.P("return")
+						g.P("}") // end if s.ReadNil() {
+					}
+					// Allocate a zero message, call the unmarshaler and append the message to the list.
+					g.P("v := ", ifThenElse(nullable, "&", ""), field.Message.GoIdent, "{}")
+					g.P(`v.UnmarshalProtoJSON(s.WithField("`, field.Desc.Name(), `", `, delegateMask, `))`)
+					g.P("if s.Err() != nil {")
+					g.P("return")
+					g.P("}")
+					g.P("x.", fieldGoName, " = append(x.", fieldGoName, ", v)")
 				default:
 					// Otherwise, delegate to the library.
 					g.P("// NOTE: ", field.Message.GoIdent.GoName, " does not seem to implement UnmarshalProtoJSON.")
@@ -405,6 +460,15 @@ nextField:
 					g.P("return")
 					g.P("}")
 					g.P(messageOrOneofIdent, ".", fieldGoName, " = ", ifThenElse(nullable, "", "*"), "v")
+
+				// Has the same behaviour as the g.messageHasUnmarshaler case but is a catch all for when the message has a fieldmask.
+				case g.messageHasFieldMask(field.Message):
+					if nullable {
+						// Set the field (or enum wrapper) to a newly allocated custom type.
+						g.P(messageOrOneofIdent, ".", fieldGoName, " = &", field.Message.GoIdent, "{}")
+					}
+					// Call UnmarshalProtoJSON on the field.
+					g.P(messageOrOneofIdent, ".", fieldGoName, `.UnmarshalProtoJSON(s.WithField("`, field.Desc.Name(), `", `, delegateMask, `))`)
 				default:
 					// Otherwise, delegate to the library.
 					g.P("// NOTE: ", field.Message.GoIdent.GoName, " does not seem to implement UnmarshalProtoJSON.")
