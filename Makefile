@@ -11,7 +11,7 @@ clean:
 	rm -f ./annotations/*.pb.go
 	rm -f ./test/*/*.pb.go
 
-.dev/protoc-gen-go-json/annotations.proto: annotations.proto
+.dev/protoc-gen-go-json/annotations.proto: api/thethings/json/annotations.proto
 	mkdir -p $(shell dirname $@)
 	cp $< $@
 
@@ -40,7 +40,7 @@ build: .bin/protoc-gen-go-json .bin/protoc-gen-go-json-linux-amd64 .bin/protoc-g
 .PHONY: watch
 
 watch:
-	ls annotations.proto cmd/protoc-gen-go-json/*.go internal/gen/*.go test/*.proto | entr make build test
+	ls api/thethings/json/annotations.proto cmd/protoc-gen-go-json/*.go internal/gen/*.go test/*.proto | entr make build test
 
 OS :=
 ifeq ($(shell uname),Linux)
@@ -61,7 +61,7 @@ endif
 .PHONY: testprotos
 
 testprotos: build .dev/golangproto/bin/protoc .dev/golangproto/bin/protoc-gen-go
-	PATH="$$PWD/.bin:$$PWD/.dev/golangproto/bin:$$PATH" protoc -I ./test -I . \
+	PATH="$$PWD/.bin:$$PWD/.dev/golangproto/bin:$$PATH" protoc -I ./test -I ./api \
 	  --go_opt=paths=source_relative --go_out=./test/golang \
 	  --go-json_opt=paths=source_relative --go-json_opt=std=true --go-json_out=./test/golang \
 	  ./test/*.proto
