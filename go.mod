@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/json-iterator/go v1.1.12
-	google.golang.org/protobuf v1.36.5
+	google.golang.org/protobuf v1.36.6
 )
 
 require (
